@@ -1,0 +1,70 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    # bootstrap, the EVL kernel and the ROS packages take a while
+    timeout-minutes: 350
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # the system test boots an x86 image, so it only applies here
+          - target: qemu-amd64
+            kas: kas/qemu-amd64.yml
+            test: true
+          - target: rpi4
+            kas: kas/raspberry-pi4.yml
+            test: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room for the build
+        # the image plus the kernel build needs more than a stock runner has
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost \
+                      "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}"
+          df -h /
+
+      - name: Install the test dependencies
+        if: matrix.test
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              qemu-system-x86 python3-pexpect
+          # /dev/kvm exists on the runners but is not accessible until the
+          # udev rules are reapplied; without it qemu falls back to TCG and
+          # the test just runs slower
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm || true
+
+      - name: Build the image
+        run: ./kas-container build ${{ matrix.kas }}
+
+      - name: Boot the image and run the system test
+        if: matrix.test
+        run: python3 testsuite/test-evl-ros.py
+
+      - name: Collect logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.target }}
+          path: |
+            build/tmp/work/*/*/*/temp/log.do_*
+            build/tmp/deploy/images/*/*.manifest
+          if-no-files-found: ignore
