@@ -37,3 +37,20 @@ Login is root/root. ROS 2 sits in /opt/ros/lyrical, so source
 
 Under QEMU the EVL core comes up and `evl check` works, but the latency
 numbers it reports are meaningless. Use real hardware for that.
+
+## ros-evl-demo
+
+The image ships ros-evl-demo, a Rust binary that runs an EVL real-time thread
+and a ROS 2 node in one process. The real-time side generates a 1 kHz sine
+wave and pushes the samples through a cross-buffer, the ROS side publishes
+them on /rt/sensor. Writing a float to /rt/command changes the amplitude.
+
+```
+source /opt/ros/lyrical/setup.bash
+ros-evl-demo
+```
+
+r2r, revl and evl-sys are not packaged by Ubuntu, so recipes-ros/librust-r2r,
+recipes-xenomai/librust-revl and recipes-xenomai/librust-evl-sys unpack their
+crate sources into /usr/share/cargo/registry, where dh-cargo picks them up.
+Everything else those crates need comes from Ubuntu's librust-*-dev packages.

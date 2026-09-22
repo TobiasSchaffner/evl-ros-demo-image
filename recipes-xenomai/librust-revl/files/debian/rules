@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+REG = debian/librust-revl-dev/usr/share/cargo/registry
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	:
+
+override_dh_auto_build:
+	:
+
+override_dh_auto_test:
+	:
+
+override_dh_auto_install:
+	install -d $(REG)/revl-@VERSION@
+	cp -a Cargo.toml LICENSE src $(REG)/revl-@VERSION@/
+	echo '{"files":{}}' > $(REG)/revl-@VERSION@/.cargo-checksum.json
+	install -d $(REG)/embedded-time-@ET_VERSION@
+	cp -a embedded-time-@ET_VERSION@/. $(REG)/embedded-time-@ET_VERSION@/
+	echo '{"files":{}}' > $(REG)/embedded-time-@ET_VERSION@/.cargo-checksum.json

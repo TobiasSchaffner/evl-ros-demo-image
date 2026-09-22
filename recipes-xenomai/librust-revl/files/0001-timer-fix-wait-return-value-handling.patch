@@ -1,0 +1,36 @@
+From bfc18a850665f97416ba4f076a688a0ecd204d41 Mon Sep 17 00:00:00 2001
+From: Tobias Schaffner <tobias.schaffner@hm.edu>
+Date: Tue, 22 Sep 2026 16:51:20 +0200
+Subject: [PATCH] timer: accept the byte count oob_read returns on success
+
+Timer::wait() matched -ret against 0, but oob_read() returns the number of
+bytes read on success, so a successful wait landed in the catch-all arm and
+came back as ErrorKind::Other. Every periodic loop broke out on its first
+tick.
+---
+ src/timer.rs | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/timer.rs b/src/timer.rs
+index 8208dfd..97d13cc 100644
+--- a/src/timer.rs
++++ b/src/timer.rs
+@@ -361,11 +361,11 @@ impl Timer {
+                      overruns.as_mut_ptr() as *mut c_void,
+                      std::mem::size_of::<u64>())
+         } as i32;
++        if ret >= 0 {
++            let overruns = unsafe { overruns.assume_init() };
++            return Ok((overruns > 0).then_some(overruns));
++        }
+         match -ret {
+-            0 => {
+-                let overruns = unsafe { overruns.assume_init() };
+-                Ok((overruns > 0).then_some(overruns))
+-            },
+             libc::EPERM => {
+                 Err(Error::from(ErrorKind::PermissionDenied))
+             },
+-- 
+2.43.0
+

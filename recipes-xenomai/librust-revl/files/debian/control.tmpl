@@ -1,0 +1,16 @@
+Source: librust-revl
+Section: rust
+Priority: optional
+Maintainer: ${MAINTAINER}
+Build-Depends: ${DEBIAN_BUILD_DEPENDS}
+Standards-Version: 4.7.4
+
+Package: librust-revl-dev
+Architecture: any
+Depends: ${misc:Depends},
+ librust-evl-sys-dev,
+ librust-libc-dev (>= 0.2),
+ librust-num-dev (>= 0.4)
+Description: Rust crate source for revl and embedded-time
+ Installs the revl and embedded-time crate sources into the system
+ Cargo registry for downstream Rust package builds.

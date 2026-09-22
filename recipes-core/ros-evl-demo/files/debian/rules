@@ -1,0 +1,46 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+
+include /usr/share/dpkg/default.mk
+include /usr/share/rustc/architecture.mk
+
+export DEB_HOST_RUST_TYPE
+
+ROS_ROOT = /opt/ros/@ROS_DISTRO@
+export ROS_DISTRO = @ROS_DISTRO@
+export AMENT_PREFIX_PATH = $(ROS_ROOT)
+export CMAKE_PREFIX_PATH = $(ROS_ROOT)
+export LD_LIBRARY_PATH := $(ROS_ROOT)/lib$(if $(LD_LIBRARY_PATH),:$(LD_LIBRARY_PATH))
+export PATH := $(ROS_ROOT)/bin:$(PATH)
+export DEB_CARGO_CRATE = $(DEB_SOURCE)_$(DEB_VERSION_UPSTREAM)
+export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+# dpkg-shlibdeps warns about ROS's unversioned SONAMEs and about
+# librcl_logging_spdlog being linked without its symbols being used. Both come
+# from the link flags r2r_rcl emits; rustc places -C link-arg after the -l
+# flags, so --as-needed cannot drop it. Harmless: rcl needs the library anyway
+# and the generated dependency (ros-<distro>-rcl) is correct.
+
+%:
+	dh $@ --buildsystem=cargo
+
+override_dh_auto_build:
+	# dh_auto_configure (cargo buildsystem) linked the system crates into
+	# debian/cargo_registry/ and wrote .cargo/config.toml. Call cargo
+	# directly rather than the dh-cargo wrapper, so the dependency
+	# versions get resolved against what is actually installed instead of
+	# a shipped Cargo.lock.
+	# The "ignoring 'sbom' config" warning comes from dh-cargo's generated
+	# config.toml, which expects a newer cargo than Ubuntu ships. Harmless.
+	cargo build --release --offline
+
+override_dh_auto_install:
+	bin=$$(ls -1 target/release/ros-evl-demo target/*/release/ros-evl-demo \
+		2>/dev/null | head -n1); \
+	install -D -m 0755 "$$bin" debian/ros-evl-demo/usr/bin/ros-evl-demo
+
+override_dh_auto_test:
+	# Tests would need a running EVL core
+	:

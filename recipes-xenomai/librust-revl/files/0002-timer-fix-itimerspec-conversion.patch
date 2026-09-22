@@ -1,0 +1,96 @@
+From 391fc41a3d340ef927fd49fa6add50df4f4a5a45 Mon Sep 17 00:00:00 2001
+From: Tobias Schaffner <tobias.schaffner@hm.edu>
+Date: Tue, 22 Sep 2026 19:54:12 +0200
+Subject: [PATCH] timer: build the itimerspec from plain nanosecond counts
+
+Seconds::from(period) truncates any sub-second period to zero, so
+arm_periodic() derived it_interval from a zero seconds value and the
+following 'period % p_secs' came out as zero too: every periodic timer was
+armed as a one shot. arm() had the same problem for dates less than a second
+past the clock epoch, where it_value collapsed to zero and disarmed the
+timer.
+
+Convert both fields straight from the nanosecond counts instead.
+---
+ src/timer.rs | 38 +++++++++++++++-----------------------
+ 1 file changed, 15 insertions(+), 23 deletions(-)
+
+diff --git a/src/timer.rs b/src/timer.rs
+index 97d13cc..abc3731 100644
+--- a/src/timer.rs
++++ b/src/timer.rs
+@@ -35,7 +35,7 @@ use evl_sys::{
+     itimerspec,
+ };
+ use embedded_time::{
+-    duration::{Nanoseconds, Seconds},
++    duration::Nanoseconds,
+     rate::*,
+     Instant,
+ };
+@@ -45,6 +45,15 @@ use crate::clock::CoreClock;
+ #[derive(PartialEq, Debug)]
+ pub struct Timer(pub(crate) c_int);
+ 
++/// Split a nanosecond count into the seconds and nanoseconds a
++/// timespec expects.
++fn to_timespec(nanos: u64) -> timespec {
++    timespec {
++        tv_sec: (nanos / 1_000_000_000) as time_t,
++        tv_nsec: (nanos % 1_000_000_000) as c_long,
++    }
++}
++
+ impl Timer {
+     /// Create a new timer.
+     ///
+@@ -119,17 +128,11 @@ impl Timer {
+     /// ```
+     pub fn arm(&self, date: Instant<CoreClock>) -> Result<(), Error> {
+         let dur = date.duration_since_epoch();
+-        let secs: Seconds<u64> = Seconds::try_from(dur).map_err(
++        let date: Nanoseconds<u64> = Nanoseconds::<u64>::try_from(dur).map_err(
+             |_| Error::from(ErrorKind::InvalidInput)
+         )?;
+-        let nsecs: Nanoseconds<u64> = Nanoseconds::<u64>::try_from(dur).map_err(
+-            |_| Error::from(ErrorKind::InvalidInput)
+-        )? % secs;
+         let it = itimerspec {
+-            it_value: timespec {
+-                tv_sec: secs.integer() as time_t,
+-                tv_nsec: nsecs.integer() as c_long,
+-            },
++            it_value: to_timespec(date.integer()),
+             it_interval: timespec {
+                 tv_sec: 0,
+                 tv_nsec: 0,
+@@ -181,23 +184,12 @@ impl Timer {
+     /// ```
+     pub fn arm_periodic(&self, date: Instant<CoreClock>, period: Nanoseconds<u64>) -> Result<(), Error> {
+         let dur = date.duration_since_epoch();
+-        let v_secs: Seconds<u64> = Seconds::try_from(dur).map_err(
++        let date: Nanoseconds<u64> = Nanoseconds::<u64>::try_from(dur).map_err(
+             |_| Error::from(ErrorKind::InvalidInput)
+         )?;
+-        let v_nsecs: Nanoseconds<u64> = Nanoseconds::<u64>::try_from(dur).map_err(
+-            |_| Error::from(ErrorKind::InvalidInput)
+-        )? % v_secs;
+-        let p_secs: Seconds<u64> = Seconds::from(period);
+-        let p_nsecs: Nanoseconds<u64> = period % p_secs;
+         let it = itimerspec {
+-            it_value: timespec {
+-                tv_sec: v_secs.integer() as time_t,
+-                tv_nsec: v_nsecs.integer() as c_long,
+-            },
+-            it_interval: timespec {
+-                tv_sec: p_secs.integer() as time_t,
+-                tv_nsec: p_nsecs.integer() as c_long,
+-            }
++            it_value: to_timespec(date.integer()),
++            it_interval: to_timespec(period.integer()),
+         };
+         let ret: c_int = unsafe { evl_set_timer(self.0 as c_int, &it, ptr::null_mut()) };
+         match -ret {
+-- 
+2.43.0
+

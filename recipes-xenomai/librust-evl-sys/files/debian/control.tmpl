@@ -1,0 +1,19 @@
+Source: librust-evl-sys
+Section: rust
+Priority: optional
+Maintainer: ${MAINTAINER}
+Build-Depends: ${DEBIAN_BUILD_DEPENDS}
+Standards-Version: 4.7.4
+
+Package: librust-evl-sys-dev
+Architecture: any
+Depends: ${misc:Depends},
+ libevl,
+ librust-bitflags-1-dev (>= 1.3),
+ librust-libc-dev (>= 0.2),
+ librust-bindgen-dev (>= 0.72),
+ librust-cc-dev (>= 1.0),
+ libclang-dev
+Description: Rust crate source for evl-sys
+ Installs the evl-sys crate source into the system Cargo registry for
+ downstream Rust package builds.

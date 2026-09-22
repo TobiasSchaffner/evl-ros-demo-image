@@ -1,0 +1,16 @@
+Source: ros-evl-demo
+Section: misc
+Priority: optional
+Maintainer: ${MAINTAINER}
+Build-Depends: ${DEBIAN_BUILD_DEPENDS}
+Standards-Version: 4.7.4
+
+Package: ros-evl-demo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libevl, ros-${ROS_DISTRO}-rcl
+Description: EVL real-time + ROS 2 bridge demo
+ Single Rust binary demonstrating bidirectional communication between
+ an EVL real-time thread (SCHED_FIFO, 1kHz periodic timer) and ROS 2
+ topics via a private cross-buffer (xbuf). The RT thread generates a
+ sine wave and publishes to /rt/sensor; a subscription on /rt/command
+ controls the sine amplitude.

@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+REG = usr/share/cargo/registry
+PKG = debian/librust-r2r-dev
+
+# Filled in by the recipe during do_prepare_build
+CRATES = @CRATES@
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	:
+
+override_dh_auto_build:
+	:
+
+override_dh_auto_test:
+	:
+
+override_dh_auto_install:
+	$(foreach c,$(CRATES), \
+	  install -d $(PKG)/$(REG)/$c && \
+	  cp -a $c/. $(PKG)/$(REG)/$c/ && \
+	  echo '{"files":{}}' > $(PKG)/$(REG)/$c/.cargo-checksum.json ;)

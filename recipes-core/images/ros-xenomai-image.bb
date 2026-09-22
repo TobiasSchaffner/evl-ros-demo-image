@@ -15,6 +15,8 @@ IMAGE_INSTALL += "customizations sshd-regen-keys expand-on-first-boot"
 # Xenomai / EVL real-time tools
 IMAGE_INSTALL += "libevl-test"
 
+IMAGE_INSTALL += "ros-evl-demo"
+
 # ROS 2 packages (from packages.ros.org, ROS_DISTRO set by the distro conf)
 IMAGE_PREINSTALL += "\
     ros-${ROS_DISTRO}-ros-base \

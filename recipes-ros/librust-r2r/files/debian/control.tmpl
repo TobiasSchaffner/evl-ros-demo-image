@@ -1,0 +1,41 @@
+Source: librust-r2r
+Section: rust
+Priority: optional
+Maintainer: ${MAINTAINER}
+Build-Depends: ${DEBIAN_BUILD_DEPENDS}
+Standards-Version: 4.7.4
+
+Package: librust-r2r-dev
+Architecture: any
+Depends: ${misc:Depends},
+ libclang-dev,
+ librust-bindgen-dev (>= 0.72),
+ librust-futures-dev (>= 0.3),
+ librust-indexmap-dev (>= 2.2),
+ librust-itertools-dev (>= 0.14),
+ librust-lazy-static-dev (>= 1.4),
+ librust-libc-dev (>= 0.2),
+ librust-log-dev (>= 0.4),
+ librust-os-str-bytes-dev (>= 7),
+ librust-paste-dev (>= 1),
+ librust-phf-dev (>= 0.11),
+ librust-phf+macros-dev (>= 0.11),
+ librust-prettyplease-dev (>= 0.2),
+ librust-proc-macro2-dev (>= 1),
+ librust-quote-dev (>= 1),
+ librust-rayon-dev (>= 1.7),
+ librust-regex-dev (>= 1.8),
+ librust-serde-dev (>= 1),
+ librust-serde+derive-dev (>= 1),
+ librust-serde-json-dev (>= 1),
+ librust-sha2-dev (>= 0.10),
+ librust-syn-dev (>= 2),
+ librust-thiserror-1-dev (>= 1),
+ librust-uuid-dev (>= 1.2),
+ librust-uuid+features-dev (>= 1.2),
+ librust-widestring-dev (>= 1)
+Description: ROS 2 Rust client library crate sources
+ Installs r2r, r2r_actions, r2r_common, r2r_macros, r2r_msg_gen, r2r_rcl
+ and force-send-sync crate sources into the system Cargo registry for
+ downstream Rust package builds. All other dependencies come from
+ Ubuntu's packaged crates.
