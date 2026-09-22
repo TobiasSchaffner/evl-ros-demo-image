@@ -1,0 +1,12 @@
+#
+# Enable debug options for development
+#
+# SPDX-License-Identifier: MIT
+
+header:
+  version: 14
+
+local_conf_header:
+  debug: |
+    XENOMAI_DEBUG = "1"
+    IMAGE_PREINSTALL:append = " gdb strace ltrace valgrind"

@@ -1,0 +1,42 @@
+#
+# ISAR ROS Xenomai Image - Base kas configuration
+#
+# SPDX-License-Identifier: MIT
+
+header:
+  version: 14
+
+build_system: isar-privileged
+
+target: ros-xenomai-image
+distro: ros-xenomai
+machine: qemu-amd64
+
+repos:
+  isar-ros-xenomai-image:
+
+  isar:
+    url: https://github.com/ilbers/isar.git
+    commit: 2bac0a0c07d0d1335900367257d8c0cd5c2ee107
+    layers:
+      meta:
+      meta-isar:
+
+  xenomai-images:
+    url: https://gitlab.com/Xenomai/xenomai-images.git
+    commit: fec90e4a6c0a3e6df0f03476a0ba20d94ad67230
+
+local_conf_header:
+  arch: |
+    DISTRO_ARCH ??= "amd64"
+  cross: |
+    ISAR_CROSS_COMPILE = "1"
+  ccache: |
+    USE_CCACHE = "1"
+  hostname: |
+    MACHINE_HOSTNAME = "ros-xenomai"
+  users: |
+    USERS += "root"
+    # Default password: root (TODO: change for production!)
+    USER_root[password] = "$6$vES27yqp$YVWiGwpxfKPGEiFTVDV4MR1X3.3IxZer5P/Hus/8XT1u/P.tJ8h63W5JxrqOf0tBMMyF55Po2Cf3VtnTiCi/S1"
+    USER_root[shell] = "/bin/bash"

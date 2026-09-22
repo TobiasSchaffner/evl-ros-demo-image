@@ -1,0 +1,13 @@
+#
+# QEMU AMD64 target for ROS-Xenomai image
+#
+# SPDX-License-Identifier: MIT
+
+header:
+  version: 14
+  includes:
+    - kas/ros-xenomai-image.yml
+
+build_system: isar-privileged
+
+machine: qemu-amd64
